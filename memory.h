@@ -43,5 +43,13 @@ inline void mmap_unset(int );
 
 inline bool mmap_test(int );
 
+size_t pmmngr_get_memory_size();
 
+uint32_t pmmngr_get_block_count();
+
+uint32_t pmmngr_get_use_block_count();
+
+uint32_t pmmngr_get_free_block_count();
+
+uint32_t pmmngr_get_block_size();
 

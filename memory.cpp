@@ -108,3 +108,26 @@ void pmmngr_dealloc_block(void* p){
 	
 	_mmngr_used_blocks-- ;
 }
+
+// other mini-helper functions 
+
+size_t pmmngr_get_memory_size() {
+	return _mmngr_memory_size;
+}
+
+uint32_t pmmngr_get_block_count(){
+	return _mmngr_max_blocks;
+}
+
+uint32_t pmmngr_get_use_block_count(){
+	return _mmngr_used_blocks;
+}
+
+uint32_t pmmngr_get_free_block_count(){
+	return _mmngr_max_blocks - (_mmngr_used_blocks) ;
+}
+
+uint32_t pmmngr_get_block_size () {
+
+	return PMMNGR_BLOCK_SIZE;
+}
