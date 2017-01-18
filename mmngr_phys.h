@@ -57,3 +57,5 @@ void pmmngr_load_PDBR (physical_addr );
 
 physical_addr pmmngr_get_PDBR();
 
+void pmmngr_paging_enable(bool ) ;
+

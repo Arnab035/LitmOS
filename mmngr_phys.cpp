@@ -153,3 +153,27 @@ physical_addr pmmngr_get_PDBR(){
 			}
 	#endif
 } 
+
+// enable paging also
+
+void pmmngr_paging_enable(bool a){
+	#ifdef _MSC_VER
+		_asm{
+			mov eax, cr0
+			cmp [a], 1
+			je enable
+			jmp disable
+			
+			enable:
+				or eax, 0x80000000
+				mov cr0, eax
+				jmp done
+			disable:
+				and eax, 0x7fffffff
+				mov cr0, eax
+			done:
+				
+		}
+	#endif
+	
+}
