@@ -120,5 +120,76 @@ void vmmngr_map_page(void* phys, void* virt){
 	return;
 }
 
+void vmmngr_initialize(){
+	// initialize memory manager
+	// Step 1. Create two page tables ---> to illustrate two different mapping schemes 
+	
+	// 1.a) this one is for the kernel
+	ptable* table1 = (ptable*) pmmngr_alloc_block();
+	if(!table1) 
+		return;
+		
+	// 1.b) this one is not for the kernel
+	ptable* table2 = (ptable*) pmmngr_alloc_block();
+	if(!table2)
+		return;
+	// 1.ab) Clear page table for kernel
+	vmmngr_ptable_clear(table);
+		
+	// Step 2. Start the mapping process --> mapping will be done in 4k blocks
+	// 2.a) This is for the non-kernel
+	for(int i=0, frame = 0x0, virt=0x00000000; i < 1024; i++, frame+=4096, virt+=4096){
+		// create a new page (or a page table entry ;))
+		pt_entry page = 0;
+		pt_entry_add_attrib(&page, I86_PTE_PRESENT);
+		
+		
+		pt_entry_set_frame(&page, (physical_addr)frame);
+		
+		table2->m_entries[PAGE_TABLE_INDEX(virt)] = page;
+		
+	}
+	// 2.b) This is for the kernel
+	for(int i=0, frame = 0x100000, virt = 0xc0000000; i < 1024; i++, frame+=4096, virt+=4096){
+		
+		// again do the same as previous loop
+		pt_entry page = 0;
+		pt_entry_add_attrib(&page, I86_PTE_PRESENT);
+		
+		pt_entry_set_frame(&page, (physical_addr)frame);
+		table1->m_entries[PAGE_TABLE_INDEX(virt)] = page;
+	}
+		
+	// 3. Create the page directory now --> this page directory will map to these two page tables
+	pdirectory* dir = (pdirectory*)pmmngr_alloc_blocks(3) ; // this method needs defining
+	if(!dir) 
+		return;
+	memset(dir, 0, sizeof(pdirectory));
+	
+	// 4. Now that page directory is created successfully. Create two different page directory entries
+	// One that maps to table1 , the other maps to table2
+	
+	// 4. a) Since we use virtual address 0x000.. this maps to non-kernel table2
+	pd_entry* dir1 = &dir->m_entries[GET_PAGE_DIRECTORY(0x00000000)];
+	pd_entry_add_attrib(dir1, I86_PDE_PRESENT);
+	
+	pd_entry_add_attrib(dir1, I86_PDE_WRITABLE);
+	pd_entry_set_frame(dir1, (physical_addr)table2);
+	
+	//4.b) This one maps to kernel table table1
+	pd_entry* dir2 = &dir->m_entries[GET_PAGE_DIRECTORY(0xc0000000)];
+	pd_entry_add_attrib(dir2, I86_PDE_PRESENT);
+	pd_entry_add_attrib(dir2, I86_PDE_WRITABLE);
+	pd_entry_set_frame(dir2, (physical_addr)table1);
+	
+	// 5. Finally set the pdbr registers to the current page directory
+	_curr_pdbr = (physical_addr)&dir->m_entries; // refers to first element of dir
+	bool result = vmmngr_switch_directory(dir);
+	
+	// 6. Set paging to be true.
+	if(result)
+		pmmngr_paging_enable(true);
+}
+
 
 
