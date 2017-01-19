@@ -6,6 +6,7 @@
 #define _MMNGR_VIRT_PDE_H
 
 #include <stdint.h>
+#include "mmngr_phys.h"
 
 /* describe the structure of a page directory table */
 

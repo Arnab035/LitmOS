@@ -3,6 +3,7 @@
 **************************************************************************************************/
 
 #include "mmngr_phys.h"
+#include<string.h>
 
 // sets a bit in the bit-mapped array --> 
 inline void mmap_set(int bit){
@@ -14,7 +15,7 @@ inline void mmap_set(int bit){
 
 inline void mmap_unset(int bit){
 	_mmngr_memory_map[bit/32] = _mmngr_memory_map[bit/32] & ~(1 << (bit % 32)) ;
-	return ;
+	
 }
 
 // tests if a bit is set or cleared

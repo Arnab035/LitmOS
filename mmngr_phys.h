@@ -3,6 +3,8 @@
  *********************************************************************************************/
  
 // define global constants
+
+#include<stdint.h>
 #define PMMNGR_BLOCKS_PER_BYTE 8
 #define PMMNGR_BLOCK_SIZE 4096
 #define PMMNGR_BLOCK_ALIGN PMMNGR_BLOCK_SIZE
@@ -21,6 +23,9 @@ static uint32_t _mmngr_max_blocks = 0;
 
 // the bit array that describes which blocks are free and which are not
 static uint32_t* _mmngr_memory_map = 0;
+
+
+typedef uint32_t physical_addr;
 
 
 // important functions used are --

@@ -3,6 +3,7 @@
 ************************************************************************************/
 
 #include "mmngr_virt.h"
+#include "mmngr_phys.h"
 #include<string.h>
 
 physical_addr _curr_pdbr = 0;
@@ -43,6 +44,7 @@ inline pt_entry* vmmngr_ptable_lookup_entry(ptable* p, virtual_addr addr){
 	if(p){
 		return &(p->m_entries[PAGE_TABLE_INDEX(addr)]);		
 	}
+	return 0;
 }
 
 // get directory entry from directory table by address 
@@ -51,6 +53,7 @@ inline pd_entry* vmmngr_pdirectory_lookup_entry (pdirectory* p, virtual_addr add
 	if(p){
 		return &p->m_entries[PAGE_DIRECTORY_INDEX(addr)] ;
 	}
+	return 0;
 }
 
 // switch the page directory entry --
@@ -88,7 +91,7 @@ void vmmngr_map_page(void* phys, void* virt){
 	
 	if(!virt) return;
 	// get me the directory address
-	pdirectory* pd = pdir;
+	pdirectory* pd = vmmngr_get_directory();
 	pd_entry* pde = &pd->m_entries[PAGE_DIRECTORY_INDEX((virtual_addr)virt)];
 	
 	if((*pde & I86_PDE_PRESENT) != I86_PDE_PRESENT){
@@ -110,7 +113,7 @@ void vmmngr_map_page(void* phys, void* virt){
 	}
 	
 	// free to map now :)
-	ptable* table = GET_PHYSICAL_ADDRESS(pde);
+	ptable* table = (ptable *)GET_PHYSICAL_ADDRESS(pde);
 	
 	pt_entry* pte = &table->m_entries[PAGE_TABLE_INDEX((virtual_addr)virt)];
 	// you got the page table entry -- just map this entry to physical addr phys
@@ -118,6 +121,12 @@ void vmmngr_map_page(void* phys, void* virt){
 	pt_entry_set_frame(pte, (physical_addr)phys);
 	
 	return;
+}
+
+void vmmngr_ptable_clear(ptable* p){
+	if(!p) return;
+	memset(p, 0, sizeof(ptable));
+	
 }
 
 void vmmngr_initialize(){
@@ -134,7 +143,7 @@ void vmmngr_initialize(){
 	if(!table2)
 		return;
 	// 1.ab) Clear page table for kernel
-	vmmngr_ptable_clear(table);
+	vmmngr_ptable_clear(table1);
 		
 	// Step 2. Start the mapping process --> mapping will be done in 4k blocks
 	// 2.a) This is for the non-kernel
@@ -180,7 +189,7 @@ void vmmngr_initialize(){
 	pd_entry* dir2 = &dir->m_entries[GET_PAGE_DIRECTORY(0xc0000000)];
 	pd_entry_add_attrib(dir2, I86_PDE_PRESENT);
 	pd_entry_add_attrib(dir2, I86_PDE_WRITABLE);
-	pd_entry_set_frame(dir2, (physical_addr)table1);
+	pd_entry_set_frame(dir2, (physical_addr )table1);
 	
 	// 5. Finally set the pdbr registers to the current page directory
 	_curr_pdbr = (physical_addr)&dir->m_entries; // refers to first element of dir
@@ -190,6 +199,8 @@ void vmmngr_initialize(){
 	if(result)
 		pmmngr_paging_enable(true);
 }
+
+
 
 
 

@@ -49,7 +49,7 @@ extern bool vmmngr_alloc_page(pt_entry* ); // allocates a page in physical memor
 
 // maps physical address to virtual address
 
-extern void MmMapPage(void* phys, void* virt);
+extern void vmmngr_map_page(void* phys, void* virt);
 
 // initialize the memory manager
 
@@ -70,14 +70,8 @@ extern void vmmngr_flush_tlb_entry(virtual_addr addr);
 // clears a page table
 extern void vmmngr_ptable_clear(ptable* p);
 
-// convert virtual address to page table index
-extern uint32_t vmmngr_ptable_virt_to_index(virtual_addr addr);
-
 // get page entry from page table
 extern pt_entry* vmmngr_ptable_lookup_entry(ptable* p, virtual_addr addr);
-
-// convert virtual address to page directory index
-extern uint32_t vmmngr_pdirectory_virt_to_index(virtual_addr addr);
 
 // clears a page directory table
 extern void vmmngr_pdirectory_clear(pdirectory* dir);

@@ -2,10 +2,11 @@
 #define _MMNGR_VIRT_PTE_H
 
 /***************************************************************************************************
-							virtual memory manager interface 
+							virtual memory manager interface for the page table
 ***************************************************************************************************/
 
 #include<stdint.h>
+#include "mmngr_phys.h"
 
 /* describe the structure of a page table entry */
 
