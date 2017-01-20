@@ -45,7 +45,7 @@ typedef struct _FILE_SYSTEM{
 	void (*mount) () ;
 	void (*read) (PFILE file, unsigned char* buffer, unsigned int length);
 	void (*close) (PFILE file);
-	void (*open) (const char* fileName);
+	FILE (*open) (const char* fileName);
 } FILESYSTEM, *PFILESYSTEM; 
 
 
