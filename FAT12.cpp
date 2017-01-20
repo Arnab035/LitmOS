@@ -11,7 +11,6 @@ MOUNT_INFO _mountInfo;
 
 void fsysFatMount(){
 
-
 	PBOOTSECTOR bootsector = 0;
 	bootsector = (PBOOTSECTOR) flpydsk_read_sector (0); // read boot sector from floppy disk.
 	// I will need to study the implementation of interfaces to read data from floppy disk
@@ -50,9 +49,11 @@ FILE fsysFatDirectory(const char* filename){
 		// step 3. Now each sector will have 16 directory entries , each of size 32 bits (32 * 16 = 512 bits )
 		// Loop across each of them-- process and compare with the first 11 bits
 		for(int j = 0; j < 15; j++){
-			char* presentFileName = 0;
-			memset(presentFileName, directory->filename, 8)
-			memset(presentFileName, directory->extension, 3);
+			char presentFileName[11]; 
+			// remember memcpy is only needed to be performed once. VVI. 
+			// It has already copied data from directory->extension(since we gave 11 bits to copy) 
+			memcpy(presentFileName, directory->filename, 11);
+			
 			presentFileName[11] = 0;
 			
 			// found a match ?
