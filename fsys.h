@@ -35,6 +35,10 @@ extern void volDeRegisterFileSystem(PFILESYSTEM );
 extern void volDeRegisterFileSystemByID(unsigned int deviceId);
 
 // all the functions performed by our files are implemented via using function pointers
+// Why is this so? Understand that if we defined functions separately we could only have
+// a single set of functions for a wide range of filesystems.
+// Now for each different filesystem, we could have a different function for reading/writing etc. altogether..
+
 typedef struct _FILE_SYSTEM{
 	char name[8];
 	FILE (*directory) (const char* directoryName);
