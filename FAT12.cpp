@@ -138,6 +138,65 @@ void fsysFatRead(PFILE file, unsigned char* buffer, unsigned int length){
 	file->currentCluster = fatEntry ;
 }
 
+// method to identify a file is present/not inside of a subdirectory 
+// This method might look similar to a file being searched inside of
+// a root directory
+
+FILE fsysFatOpenSubDir(FILE kFile, const char* filename){
+	
+	if(!kFile) return;
+	
+	
+	unsigned char buffer[512];
+	
+	unsigned char presentFileName[11];
+	
+	FILE file;
+	unsigned char dosFileName[11];
+	
+	ToDOSFileName(filename, dosFileName, 11);
+	dosFileName[11] = 0;
+	
+	// remember just like a root directory, a subdirectory entry contains
+	// alot of directory entries, you need to keep reading those
+	// entries just like to read off of a file.
+	while(!kFile.eof)
+	{
+		fsysFatRead(&kFile, buffer, 512);
+	
+		PDIRECTORY pdir = (PDIRECTORY) buffer;
+		// there will be 16 directory entries per sector...
+		for(int i = 0; i < 16; i++){
+			memcpy(presentFileName, pdir->filename, 11); // reads off extension as well
+			presentFileName[11] = 0;
+			// compare now
+			if(strcmp(presentFileName, dosFileName) == 0){
+				strcpy(file.fileName, presentFileName);
+				file.eof = 0;
+				file.currentCluster = pdir->firstCluster;
+				file.fileSize = pdir->fileSize;
+				file.id = 0;
+				// check for flags
+				if(pdir->attributes == 0x10){
+					file.flags = FS_DIRECTORY;
+				}
+				else{
+					file.flags = FS_FILE;
+				}
+				return file;
+			}
+			pdir++;
+		}
+	}
+	
+	// file not found :(
+	file.flags = FS_INVALID;
+	return file;
+	
+}
+
+
+
 
 
 
