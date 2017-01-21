@@ -7,7 +7,11 @@
 #include "bpb.h"
 #include <string.h>
 
+#define SECTOR_SIZE 512
+
 MOUNT_INFO _mountInfo;
+
+uint8_t FAT[SECTOR_SIZE * 2];
 
 void fsysFatMount(){
 
@@ -79,6 +83,59 @@ FILE fsysFatDirectory(const char* filename){
 	file.flags = FS_INVALID;
 	return file;
 	
+}
+
+// function to read in appropriate files
+void fsysFatRead(PFILE file, unsigned char* buffer, unsigned int length){
+	if(!file) return;
+	// 1. Find the first cluster to be read from and finish reading the first 512 bytes off the sector
+	unsigned int currSector = 32 + file->currentCluster - 1;
+	
+	unsigned char* sector = (unsigned char*) flpydsk_read_sector(currSector);
+	memcpy(buffer, sector, 512);
+	// 2. Now find the next cluster to read from
+	// 2.a ) find the byte offset into the fat table
+	unsigned int byteOffset = (file->currentCluster) * 1.5 ; // for FAT 12 devices, a FAT entry consists of 12 bits)
+	// find the sector to read and also the offset into the sector
+	unsigned int sectorToRead = byteOffset/(SECTOR_SIZE) + 1 ; // sectors counted from 1?
+	unsigned int sectorOffset = byteOffset % (SECTOR_SIZE) ;
+	
+	// 3. now load both the sectors into our global FAT array.
+	// two sectors need to be read or else it is likely that
+	// the last cluster/ FAT entry would contain garbage values 
+	unsigned char* sect1 = (unsigned_char* )flpydsk_read_sector(sectorToRead);
+	memcpy(FAT, sect1, 512);
+	
+	unsigned char* sect2 = (unsigned char* )flpydsk_read_sector(sectorToRead + 1);
+	memcpy(FAT+512, sect2, 512);
+	
+	// 4. Now that we are done. We need to read from the DATA stored in FAT array.
+	// Why so? Because it is after all the FAT Table Entry
+	// Read from the sector offset but read two bytes from it
+	// why because a fat table entry is 12 bits
+	// reading only a single bit won't help :0
+	uint16_t fatEntry = *(uint16_t * )&FAT[sectorOffset];
+	// 4. a) Determine if the current cluster is odd/even
+	if(file->currentCluster & 0x0001 == 0){
+		// even
+		fatEntry = fatEntry >> 4 ;
+	} 
+	else{
+		fatEntry = fatEntry & 0xfff;
+	}
+	// determine additional properties of this FAT entry-- check for file endings etc.
+	if(fatEntry >= 0xFF8 ) // value marks last cluster in file
+	{
+		file->eof = 1;
+		return;
+	}	
+	if(fatEntry == 0)   // value marks free cluster
+	{
+		file->eof = 1;
+		return;
+	}	
+	
+	file->currentCluster = fatEntry ;
 }
 
 
