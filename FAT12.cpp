@@ -13,6 +13,37 @@ MOUNT_INFO _mountInfo;
 
 uint8_t FAT[SECTOR_SIZE * 2];
 
+FILESYSTEM _fat12_system;
+
+void ToDOSFileName(const char* fileName, char* fName, unsigned int length){
+	if(!fileName || !fName){
+		return;
+	}
+	if(length > 11) return;
+	
+	unsigned int i = 0; // global array movement indicator
+	
+	memset(fName, ' ', length); // fill up the array fName with spaces
+	
+	for(i = 0; i < length && i < strlen(fileName)-1; i++){
+		if(fileName[i] == '.' || i == 8){
+			break;
+		}
+		fName[i] = toupper(fileName[i]);
+	}
+	if(fileName[i] == '.'){
+		++i;
+		for(int k =0; k < 3; k++){
+			if(fileName[i]){
+				fName[8+k] = fileName[i] ;
+			}	
+		}
+	}
+	for(i=0; i < 3; i++){
+		fName[8+i] = toupper(fName[8+i]);
+	}
+}
+
 // opens a file (note the file may be an absoulte file, may also include a path)
 // like this a:\mydir\mytext.txt
 
@@ -72,6 +103,30 @@ void fsysFatOpen(const char* filename){
 	ret->flags = FS_INVALID;
 	return ret;
 }
+
+// closes a file
+void fsysFatClose(FILE file){
+	if(file){
+		file->flags = FS_INVALID;
+	}
+}
+
+// initializes the fat12 filesystem
+void fsysFatInitialize(){
+	strcpy(_fat12_system.name, "FAT 12");
+	
+	_fat12_system.mount = fsysFatMount;
+	_fat12_system.directory = fsysFatDirectory; // searches a file in root directory
+	_fat12_system.close = fsysFatClose;
+	_fat12_system.open = fsysFatOpen;
+	_fat12_system.read = fsysFatRead;
+	
+	volRegisterFileSystem(&_fat12_system, 0);
+	
+	fsysFatMount();
+}
+
+
 
 void fsysFatMount(){
 
