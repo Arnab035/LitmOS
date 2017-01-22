@@ -13,6 +13,66 @@ MOUNT_INFO _mountInfo;
 
 uint8_t FAT[SECTOR_SIZE * 2];
 
+// opens a file (note the file may be an absoulte file, may also include a path)
+// like this a:\mydir\mytext.txt
+
+void fsysFatOpen(const char* filename){
+	if(!filename) return;
+	char* p = 0;
+	char pathFile[16];
+	bool rootDir = true;
+	char* path = (char *)filename; // const 
+	// find the first occurence of '/'
+	p = strchr(path, '\\');
+	
+	if (!p){
+		// this is probably a file in rootDir
+		FILE currDirectory = fsysFatDirectory(path);
+		if(currDirectory->flags == FS_FILE){
+			// file not present in rootdir
+			return currDirectory;
+		}
+		FILE ret;
+		ret.flags = FS_INVALID
+		return ret;
+	}
+	// '/' is present
+	p++ ;
+	while(p){
+		// file or directory names bounded by 16 characters
+		char fileOrDir[16];
+		for(i = 0; i<16; i++){
+			if(p[i] == '\\' || p[i] == 0){
+				break;
+			}
+			fileOrDir[i] = p[i] ;
+		}
+		fileOrDir[i] = 0;
+		// check if it is a root directory or a sub directory.
+		if(rootDir){
+			FILE currDirectoryOrFile = fsysFatDirectory(fileOrDir);	
+			rootDir = false; // root directory has been accessed. Now set rootDir to false
+		}	
+		else{
+			FILE currDirectoryOrFile = fsysFatOpenSubDir(fileOrDir);
+		}
+		
+		if(currDirectoryOrFile->flags == FS_FILE){
+			return currDirectoryOrFile;
+		}
+		if(currDirectoryOrFile->flags == FS_INVALID)
+			break;
+		}
+		// is this useful ?
+		p=strchr (p+1, '\\');
+		if (p)
+			p++;
+	}
+	FILE ret;
+	ret->flags = FS_INVALID;
+	return ret;
+}
+
 void fsysFatMount(){
 
 	PBOOTSECTOR bootsector = 0;
@@ -192,8 +252,10 @@ FILE fsysFatOpenSubDir(FILE kFile, const char* filename){
 	// file not found :(
 	file.flags = FS_INVALID;
 	return file;
-	
 }
+
+
+
 
 
 
